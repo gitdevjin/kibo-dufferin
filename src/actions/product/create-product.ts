@@ -1,4 +1,4 @@
-import { CreateProductInput, Product } from "@/types";
+import { CreateProductInput } from "@/types";
 
 export async function createProduct({
   company,
