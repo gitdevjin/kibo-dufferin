@@ -21,3 +21,14 @@ export type Product = {
   contactComment: string;
   qty: number;
 };
+
+export type CreateProductInput = {
+  name: string;
+  company?: string;
+  category?: string;
+  costPrice?: number;
+  sellingPrice?: number;
+  dufferinComment?: string;
+  contactComment?: string;
+  qty?: number;
+};
