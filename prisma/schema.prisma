@@ -19,23 +19,23 @@ model User {
 }
 
 model Product {
-  id             Int           @id @default(autoincrement())
-  company        String
-  category       String
-  name           String
-  costPrice      Float
-  sellingPrice   Float
-  qty            Int
-  comment        String
-  contactComment String
-  transactions   Transaction[]
+  id              Int           @id @default(autoincrement())
+  company         String        @default("")
+  category        String        @default("")
+  name            String
+  costPrice       Float         @default(0.00)
+  sellingPrice    Float         @default(0.00)
+  qty             Int           @default(0)
+  dufferinComment String        @default("")
+  contactComment  String        @default("")
+  transactions    Transaction[]
 }
 
 model Transaction {
   id        Int      @id @default(autoincrement())
   type      String
   createdAt DateTime @default(now())
-  productId Int
   qty       Int
+  productId Int
   product   Product  @relation(fields: [productId], references: [id])
 }

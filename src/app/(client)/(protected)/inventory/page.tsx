@@ -1,10 +1,16 @@
-import { Button } from "@/components/ui/button";
+"use client";
+import CreateProductButton from "@/components/product/create-product-button";
+import ProductList from "@/components/product/product-list";
 
 export default function ProductPage() {
   return (
     <div>
-      <Button>Add Product</Button>
-      <div className="bg-amber-100 w-full">InventoryPage</div>
+      <div className="flex max-w-60 justify-center items-center">
+        <CreateProductButton />
+      </div>
+      <div className="w-full">
+        <ProductList />
+      </div>
     </div>
   );
 }
