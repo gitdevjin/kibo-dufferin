@@ -11,13 +11,13 @@ export type User = {
 };
 
 export type Product = {
-  id?: number;
-  company?: string;
-  category?: string;
+  id: number;
+  company: string;
+  category: string;
   name: string;
-  costPrice?: number;
-  sellingPrice?: number;
-  dufferinComment?: string;
-  contactComment?: string;
-  qty?: number;
+  costPrice: number;
+  sellingPrice: number;
+  dufferinComment: string;
+  contactComment: string;
+  qty: number;
 };

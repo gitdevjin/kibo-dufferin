@@ -126,7 +126,9 @@ export default function ProductEditorModal() {
   return (
     <Dialog open={store.isOpen} onOpenChange={store.actions.close}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-        <DialogTitle>{store.type} Product</DialogTitle>
+        <DialogTitle className="font-bold justify-center m-auto">
+          {store.type} Product
+        </DialogTitle>
 
         <div className="flex flex-col gap-4">
           {/* Company */}
@@ -204,23 +206,23 @@ export default function ProductEditorModal() {
 
           {/* Dufferin Comment */}
           <div className="flex flex-col gap-1">
-            <Label>Dufferin Comment</Label>
+            <Label>Comment from Dufferin</Label>
             <textarea
               value={dufferinComment}
               onChange={(e) => setDufferinComment(e.target.value)}
               className="bg-secondary min-h-20 rounded-lg p-2 text-sm focus:outline-none"
-              placeholder="comment from dufferin..."
+              placeholder="leave a message..."
             />
           </div>
 
           {/* Contact Comment */}
           <div className="flex flex-col gap-1">
-            <Label>Contact Comment</Label>
+            <Label>Comment from Contact</Label>
             <textarea
               value={contactComment}
               onChange={(e) => setContactComment(e.target.value)}
               className="bg-secondary min-h-20 rounded-lg p-2 text-sm focus:outline-none"
-              placeholder="comment from contact..."
+              placeholder="leave a message..."
             />
           </div>
 

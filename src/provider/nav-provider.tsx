@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { ReactNode } from "react";
 import { useSession } from "@/hooks/queries/use-session";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import SideMenu from "@/components/parts/side-menu";
 
 export default function NavProvider({ children }: { children: ReactNode }) {
@@ -23,8 +23,9 @@ export default function NavProvider({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
       <SideMenu />
-      <main className="w-full flex-3 justify-center px-1 pb-4">
-        <div className="mx-auto flex w-full max-w-300 flex-col px-6">
+      <SidebarTrigger className="m-0 p-0" /> {/* ← toggle button */}
+      <main className="w-full flex-3 justify-center pb-4">
+        <div className="mx-auto flex w-full max-w-300 flex-col px-0">
           {children}
         </div>
       </main>

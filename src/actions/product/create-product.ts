@@ -1,4 +1,4 @@
-import { Product } from "@/types";
+import { CreateProductInput, Product } from "@/types";
 
 export async function createProduct({
   company,
@@ -9,7 +9,7 @@ export async function createProduct({
   dufferinComment,
   contactComment,
   qty,
-}: Product) {
+}: CreateProductInput) {
   const token = localStorage.getItem("token");
   if (!token) return null;
 

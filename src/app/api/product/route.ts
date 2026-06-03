@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
     }
     // --- Fetch messages ---
     const products = await prisma.product.findMany({
-      orderBy: { [orderBy]: "asc" },
+      orderBy: [{ [orderBy]: "asc" }, { name: "asc" }],
     });
 
     return NextResponse.json(products);
