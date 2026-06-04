@@ -23,9 +23,11 @@ export default function NavProvider({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
       <SideMenu />
-      <SidebarTrigger className="m-0 p-0" /> {/* ← toggle button */}
-      <main className="w-full flex-3 justify-center pb-4">
-        <div className="mx-auto flex w-full max-w-300 flex-col px-0">
+      <main className="w-full min-w-0 flex-1 pb-4">
+        <div className="flex items-center px-4 py-2">
+          <SidebarTrigger />
+        </div>
+        <div className="mx-auto flex w-full max-w-300 flex-col px-4">
           {children}
         </div>
       </main>
