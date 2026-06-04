@@ -24,9 +24,9 @@ export async function POST(req: NextRequest) {
     contactComment,
   }: Product = (await req.json()) as Product;
 
-  if (!name) {
+  if (!company || !name) {
     return NextResponse.json(
-      { error: "Missing content or authorId" },
+      { error: "Missing Company or Product Name" },
       { status: 400 },
     );
   }
@@ -75,4 +75,47 @@ export async function GET(req: NextRequest) {
     console.error(err);
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }
+}
+
+export async function PATCH(req: NextRequest) {
+  const token = req.headers.get("authorization")?.replace("Bearer ", "");
+  if (!token) return NextResponse.json({ error: "No token" }, { status: 401 });
+
+  try {
+    verifyToken(token);
+  } catch {
+    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  }
+
+  const {
+    id,
+    company,
+    name,
+    category,
+    costPrice,
+    sellingPrice,
+    qty,
+    dufferinComment,
+    contactComment,
+  }: Product = (await req.json()) as Product;
+
+  if (!id) {
+    return NextResponse.json({ error: "Missing product id" }, { status: 400 });
+  }
+
+  const product = await prisma.product.update({
+    where: { id },
+    data: {
+      name,
+      company,
+      category,
+      costPrice,
+      sellingPrice,
+      qty,
+      dufferinComment,
+      contactComment,
+    },
+  });
+
+  return NextResponse.json(product);
 }

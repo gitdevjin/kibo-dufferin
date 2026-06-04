@@ -1,17 +1,19 @@
-import { updateProduct } from "@/actions/product/update-product";
+import { createTransaction } from "@/actions/transaction/create-transaction";
 import { QUERY_KEYS } from "@/lib/const";
-import type { MutationCallbacks, Product } from "@/types";
+import type { MutationCallbacks } from "@/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-export function useUpdateProduct(callbacks?: MutationCallbacks) {
+export function useCreateTransaction(callbacks?: MutationCallbacks) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: updateProduct,
-    onSuccess: (updatedProduct) => {
+    mutationFn: createTransaction,
+    onSuccess: (createdTransaction) => {
       if (callbacks?.onSuccess) callbacks.onSuccess();
-
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.product.all,
+      });
+      queryClient.resetQueries({
+        queryKey: ["transactions"],
       });
     },
     onError: (error) => {

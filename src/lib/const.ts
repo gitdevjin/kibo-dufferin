@@ -7,4 +7,8 @@ export const QUERY_KEYS = {
     sorted: (sortBy: string) => ["products", "sorted", sortBy],
     byId: (productId: number) => ["product", "byId", productId],
   },
+  transaction: {
+    all: ["transactions"],
+    byDate: (dateBefore: string) => ["transactions", dateBefore],
+  },
 };

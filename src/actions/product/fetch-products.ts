@@ -13,7 +13,7 @@ export async function fetchProducts({
     headers: { Authorization: `Bearer ${token}` },
   });
 
-  if (!res.ok) throw new Error("Error");
+  if (!res.ok) throw new Error("Something Went Wrong(actions)");
 
   return res.json(); // products[]
 }

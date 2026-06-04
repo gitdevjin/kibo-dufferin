@@ -32,3 +32,21 @@ export type CreateProductInput = {
   contactComment?: string;
   qty?: number;
 };
+
+export type Transaction = {
+  id: number;
+  productId: number;
+  type: "Sale" | "Restock";
+  qty: number;
+  createdAt: string;
+  product: {
+    name: string;
+    company: string;
+  };
+};
+
+export type CreateTransactionInput = {
+  productId: number;
+  type: string;
+  qty: number;
+};

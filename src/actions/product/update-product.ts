@@ -1,8 +1,10 @@
 import { Product } from "@/types";
 
 export async function updateProduct({
+  id,
   company,
   name,
+  category,
   costPrice,
   sellingPrice,
   dufferinComment,
@@ -10,13 +12,19 @@ export async function updateProduct({
   qty,
 }: Product) {
   const token = localStorage.getItem("token");
-  if (!token) return null;
+  if (!token) throw new Error("Token Missing");
 
   const res = await fetch("/api/product", {
     method: "PATCH",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+
     body: JSON.stringify({
+      id,
       company,
+      category,
       name,
       costPrice,
       sellingPrice,
@@ -26,7 +34,7 @@ export async function updateProduct({
     }),
   });
 
-  if (!res.ok) return null;
+  if (!res.ok) throw new Error("Something Went Wrong(actions)");
 
   return res.json();
 }

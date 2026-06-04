@@ -32,7 +32,7 @@ const getItems = () => [
   },
   {
     title: "Transactions",
-    url: "#",
+    url: "/transactions",
     icon: ArrowLeftRight,
   },
   {
@@ -51,7 +51,7 @@ export default function SideMenu() {
           <SidebarGroupLabel className="mb-2 text-2xl">
             {/* <img className="h-7 opacity-50" src={logo} alt="Logo of StarLog" /> */}
             <span className="bg-linear-to-r from-green-700 via-emerald-500-300 to-green-400 bg-clip-text text-xl font-bold text-transparent">
-              &nbsp;&nbsp;KIBO
+              &nbsp;&nbsp;KIBO&nbsp;Dufferin
             </span>
           </SidebarGroupLabel>
           <SidebarGroupContent className="">

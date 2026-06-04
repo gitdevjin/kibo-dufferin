@@ -14,6 +14,8 @@ import {
   useProductEditorModalStore,
   useProductModalActions,
 } from "@/store/product-editor-modal-store";
+import { useCreateTransaction } from "@/hooks/mutations/transaction/use-create-transaction";
+import { useTransactionEditorModalActions } from "@/store/transction-editor-modal-store";
 
 export default function ProductList() {
   const {
@@ -23,6 +25,7 @@ export default function ProductList() {
   } = useProductsQuery({ orderBy: "company" });
 
   const { openEdit } = useProductModalActions();
+  const { open } = useTransactionEditorModalActions();
 
   if (isFetchProductsPending) return <div>Loading...</div>;
   if (isFetchProductsError) return <div>Something went wrong.</div>;
@@ -56,7 +59,13 @@ export default function ProductList() {
             products.map((product) => (
               <TableRow
                 key={product.id}
-                className={`cursor-pointer hover:bg-muted/50 ${product.qty <= 0 ? "bg-pink-50 hover:bg-pink-100" : ""} text-lg`}
+                className={`cursor-pointer hover:bg-muted/50 ${
+                  product.qty <= 0
+                    ? "bg-pink-50 hover:bg-pink-100"
+                    : product.qty <= 3
+                      ? "bg-yellow-50 hover:bg-yellow-100"
+                      : "hover:bg-muted/50"
+                } text-lg`}
                 onClick={() =>
                   openEdit({
                     productId: product.id,
@@ -74,8 +83,8 @@ export default function ProductList() {
                 <TableCell>{product.company}</TableCell>
                 <TableCell className="font-medium">
                   {" "}
-                  {product.name.length > 40
-                    ? `${product.name.slice(0, 40)}...`
+                  {product.name.length > 45
+                    ? `${product.name.slice(0, 45)}...`
                     : product.name}
                 </TableCell>
                 <TableCell>{product.category}</TableCell>
@@ -87,7 +96,12 @@ export default function ProductList() {
                     disabled={product.qty <= 0}
                     onClick={(e) => {
                       e.stopPropagation(); // ← stops row click from firing
-                      console.log("Sale Button Clicked");
+                      open({
+                        type: "Sale",
+                        productId: product.id,
+                        productName: product.name,
+                        currentQty: product.qty,
+                      });
                     }}
                     className="bg-blue-400 rounded-md cursor-pointer mr-2"
                   >
@@ -96,7 +110,12 @@ export default function ProductList() {
                   <Button
                     onClick={(e) => {
                       e.stopPropagation(); // ← stops row click from firing
-                      console.log("Restock Button Clicked");
+                      open({
+                        type: "Restock",
+                        productId: product.id,
+                        productName: product.name,
+                        currentQty: product.qty,
+                      });
                     }}
                     className="bg-orange-400 rounded-md cursor-pointer"
                   >

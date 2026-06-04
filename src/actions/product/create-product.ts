@@ -11,7 +11,7 @@ export async function createProduct({
   qty,
 }: CreateProductInput) {
   const token = localStorage.getItem("token");
-  if (!token) return null;
+  if (!token) throw new Error("Token Missing");
 
   const res = await fetch("/api/product", {
     method: "POST",
@@ -28,9 +28,7 @@ export async function createProduct({
     }),
   });
 
-  if (!res.ok) {
-    throw new Error("Something went wrong");
-  }
+  if (!res.ok) throw new Error("Something Went Wrong(actions)");
 
   return res.json();
 }
