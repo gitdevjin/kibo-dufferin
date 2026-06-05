@@ -1,16 +1,22 @@
 "use client";
 
 import { useInfiniteTransactionsQuery } from "@/hooks/queries/use-infinite-transaction";
+import { useDeleteTransaction } from "@/hooks/mutations/transaction/use-delete-transaction";
 import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 import Loading from "../fallback/loading";
 import { Button } from "../ui/button";
 import { Trash2 } from "lucide-react";
-import { Transaction } from "@/types";
+import { toast } from "sonner";
 
 export default function TransactionFeed({ dateBefore }: { dateBefore?: Date }) {
   const { data, error, isPending, fetchNextPage, isFetchingNextPage } =
     useInfiniteTransactionsQuery({ dateBefore });
+
+  const { mutate: deleteTransaction } = useDeleteTransaction({
+    onSuccess: () => toast.success("Transaction deleted"),
+    onError: (error) => toast.error(error.message, { position: "top-center" }),
+  });
 
   const { ref, inView } = useInView({ threshold: 0, rootMargin: "100px" });
 
@@ -73,7 +79,7 @@ export default function TransactionFeed({ dateBefore }: { dateBefore?: Date }) {
                     size="sm"
                     variant="ghost"
                     className="cursor-pointer text-destructive hover:text-destructive"
-                    onClick={() => console.log("delete", transaction.id)}
+                    onClick={() => deleteTransaction(transaction.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -111,7 +117,7 @@ export default function TransactionFeed({ dateBefore }: { dateBefore?: Date }) {
                   size="sm"
                   variant="ghost"
                   className="cursor-pointer text-destructive hover:text-destructive h-7 w-7 p-0"
-                  onClick={() => console.log("delete", transaction.id)}
+                  onClick={() => deleteTransaction(transaction.id)}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>

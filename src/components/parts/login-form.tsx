@@ -33,8 +33,7 @@ export default function LoginForm() {
     <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Coffee className="text-primary" />
-          Login
+          Kibo Dufferin Login
         </CardTitle>
         <CardDescription>Enter your Name and Password</CardDescription>
       </CardHeader>
@@ -46,7 +45,7 @@ export default function LoginForm() {
             <Input
               id="name"
               type="text"
-              placeholder="not your real name"
+              placeholder="id"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required

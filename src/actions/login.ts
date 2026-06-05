@@ -14,7 +14,7 @@ export async function login(name: string, password: string) {
 
   // Create JWT
   const token = jwt.sign({ userId: user.id, name: user.name }, JWT_SECRET, {
-    expiresIn: "7d",
+    expiresIn: "30d",
   });
   console.log("id checked");
 
