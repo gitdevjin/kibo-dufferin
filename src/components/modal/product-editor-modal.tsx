@@ -1,446 +1,265 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useProductsQuery } from "@/hooks/queries/use-product-query";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useProductEditorModalStore } from "@/store/product-editor-modal-store";
+import { useCreateProduct } from "@/hooks/mutations/product/use-create-product";
+import { useUpdateProduct } from "@/hooks/mutations/product/use-update-product";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../ui/table";
-import { Button } from "../ui/button";
-import { useProductModalActions } from "@/store/product-editor-modal-store";
-import { useTransactionEditorModalActions } from "@/store/transction-editor-modal-store";
-import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
-type SortField = "qty" | "company";
-type SortDirection = "asc" | "desc";
+const CATEGORIES = ["Mask", "Others"] as const;
 
-type SortOption = {
-  label: string;
-  field: SortField;
-  direction: SortDirection;
-};
+export default function ProductEditorModal() {
+  const store = useProductEditorModalStore();
 
-const SORT_OPTIONS: SortOption[] = [
-  { label: "Default (Company A–Z)", field: "company", direction: "asc" },
-  { label: "Company Z–A", field: "company", direction: "desc" },
-  { label: "Qty: Lowest first", field: "qty", direction: "asc" },
-  { label: "Qty: Highest first", field: "qty", direction: "desc" },
-];
+  const [company, setCompany] = useState("");
+  const [category, setCategory] = useState("");
+  const [name, setName] = useState("");
+  const [costPrice, setCostPrice] = useState("");
+  const [sellingPrice, setSellingPrice] = useState("");
+  const [qty, setQty] = useState("");
+  const [dufferinComment, setDufferinComment] = useState("");
+  const [contactComment, setContactComment] = useState("");
+  const [isActive, setIsActive] = useState(true);
 
-type DesktopSort = {
-  field: "company" | "qty";
-  direction: "asc" | "desc";
-} | null;
+  const { mutate: createProduct, isPending: isCreating } = useCreateProduct({
+    onSuccess: () => {
+      store.actions.close();
+      toast.success("Product created successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message, { position: "top-center" });
+    },
+  });
 
-function SortIcon({
-  active,
-  direction,
-}: {
-  active: boolean;
-  direction?: "asc" | "desc";
-}) {
-  if (!active)
-    return <ArrowUpDown className="inline w-4 h-4 ml-1 opacity-40" />;
-  if (direction === "asc") return <ArrowUp className="inline w-4 h-4 ml-1" />;
-  return <ArrowDown className="inline w-4 h-4 ml-1" />;
-}
+  const { mutate: updateProduct, isPending: isUpdating } = useUpdateProduct({
+    onSuccess: () => {
+      store.actions.close();
+      toast.success("Product updated successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message, { position: "top-center" });
+    },
+  });
 
-export default function ProductList() {
-  const {
-    data: products,
-    error: isFetchProductsError,
-    isPending: isFetchProductsPending,
-  } = useProductsQuery({ orderBy: "company" });
+  // Populate fields when editing
+  useEffect(() => {
+    if (!store.isOpen) return;
 
-  const { openEdit } = useProductModalActions();
-  const { open } = useTransactionEditorModalActions();
+    if (store.type === "Edit") {
+      setCompany(store.company);
+      setCategory(store.category);
+      setName(store.name);
+      setCostPrice(store.costPrice.toString());
+      setSellingPrice(store.sellingPrice.toString());
+      setQty(store.qty.toString());
+      setDufferinComment(store.dufferinComment);
+      setContactComment(store.contactComment);
+      setIsActive(store.isActive ?? true);
+    } else {
+      setCompany("");
+      setCategory("");
+      setName("");
+      setCostPrice("");
+      setSellingPrice("");
+      setQty("");
+      setDufferinComment("");
+      setContactComment("");
+      setIsActive(true);
+    }
+  }, [store.isOpen]);
 
-  const [desktopSort, setDesktopSort] = useState<DesktopSort>(null);
-  const [mobileSortKey, setMobileSortKey] = useState<string>("default");
-  const [showAll, setShowAll] = useState(false);
+  const isPending = isCreating || isUpdating;
 
-  const handleCompanyHeaderClick = () => {
-    setDesktopSort((prev) => {
-      if (!prev || prev.field !== "company")
-        return { field: "company", direction: "desc" };
-      return {
-        field: "company",
-        direction: prev.direction === "desc" ? "asc" : "desc",
-      };
-    });
+  const handleSave = () => {
+    if (!name.trim() || !company.trim()) {
+      toast.error("Name and company are required", { position: "top-center" });
+      return;
+    }
+
+    if (costPrice !== "" && isNaN(parseFloat(costPrice))) {
+      toast.error("Cost price must be a valid number", {
+        position: "top-center",
+      });
+      return;
+    }
+
+    if (sellingPrice !== "" && isNaN(parseFloat(sellingPrice))) {
+      toast.error("Selling price must be a valid number", {
+        position: "top-center",
+      });
+      return;
+    }
+
+    if (qty !== "" && isNaN(parseInt(qty))) {
+      toast.error("Quantity must be a valid number", {
+        position: "top-center",
+      });
+      return;
+    }
+
+    const data = {
+      company,
+      name,
+      category,
+      costPrice: parseFloat(costPrice) || 0,
+      sellingPrice: parseFloat(sellingPrice) || 0,
+      qty: parseInt(qty) || 0,
+      dufferinComment,
+      contactComment,
+      isActive,
+    };
+
+    if (store.type === "Create") {
+      createProduct(data);
+    } else if (store.type === "Edit") {
+      updateProduct({ id: store.productId, ...data });
+    }
   };
-
-  const handleQtyHeaderClick = () => {
-    setDesktopSort((prev) => {
-      if (!prev || prev.field !== "qty")
-        return { field: "qty", direction: "asc" };
-      return {
-        field: "qty",
-        direction: prev.direction === "asc" ? "desc" : "asc",
-      };
-    });
-  };
-
-  // Shared filter: apply isActive filter first, then sort
-  const filteredProducts = useMemo(() => {
-    if (!products) return [];
-    return showAll ? products : products.filter((p) => p.isActive);
-  }, [products, showAll]);
-
-  const sortedProducts = useMemo(() => {
-    return [...filteredProducts].sort((a, b) => {
-      if (desktopSort?.field === "qty") {
-        return desktopSort.direction === "asc" ? a.qty - b.qty : b.qty - a.qty;
-      }
-      if (desktopSort?.field === "company") {
-        const cmp = a.company.localeCompare(b.company);
-        return desktopSort.direction === "asc" ? cmp : -cmp;
-      }
-      return a.company.localeCompare(b.company);
-    });
-  }, [filteredProducts, desktopSort]);
-
-  const mobileSortedProducts = useMemo(() => {
-    const option = SORT_OPTIONS.find(
-      (o) => `${o.field}-${o.direction}` === mobileSortKey,
-    );
-    if (!option) return [...filteredProducts];
-    return [...filteredProducts].sort((a, b) => {
-      if (option.field === "qty") {
-        return option.direction === "asc" ? a.qty - b.qty : b.qty - a.qty;
-      }
-      const cmp = a.company.localeCompare(b.company);
-      return option.direction === "asc" ? cmp : -cmp;
-    });
-  }, [filteredProducts, mobileSortKey]);
-
-  const companyActive = desktopSort?.field === "company";
-  const qtyActive = desktopSort?.field === "qty";
-
-  // Count archived for badge
-  const archivedCount = useMemo(
-    () => products?.filter((p) => !p.isActive).length ?? 0,
-    [products],
-  );
-
-  if (isFetchProductsPending) return <div>Loading...</div>;
-  if (isFetchProductsError) return <div>Something went wrong.</div>;
-
-  const renderRow = (product: (typeof sortedProducts)[0]) => (
-    <TableRow
-      key={product.id}
-      className={`cursor-pointer text-lg ${
-        !product.isActive
-          ? "opacity-50"
-          : product.qty <= 0
-            ? "bg-pink-50 hover:bg-pink-100"
-            : product.qty <= 3
-              ? "bg-yellow-50 hover:bg-yellow-100"
-              : "hover:bg-muted/50"
-      }`}
-      onClick={() =>
-        openEdit({
-          productId: product.id,
-          company: product.company,
-          category: product.category,
-          name: product.name,
-          costPrice: product.costPrice,
-          sellingPrice: product.sellingPrice,
-          qty: product.qty,
-          isActive: product.isActive,
-          dufferinComment: product.dufferinComment,
-          contactComment: product.contactComment,
-        })
-      }
-    >
-      <TableCell>{product.company}</TableCell>
-      <TableCell className="font-medium">
-        <span>
-          {product.name.length > 45
-            ? `${product.name.slice(0, 45)}...`
-            : product.name}
-        </span>
-        {!product.isActive && (
-          <span className="ml-2 text-xs text-muted-foreground border rounded px-1 py-0.5">
-            archived
-          </span>
-        )}
-      </TableCell>
-      <TableCell>{product.category}</TableCell>
-      <TableCell>${product.costPrice?.toFixed(2)}</TableCell>
-      <TableCell>${product.sellingPrice?.toFixed(2)}</TableCell>
-      <TableCell>{product.qty}</TableCell>
-      <TableCell className="flex justify-center items-center gap-2">
-        <Button
-          disabled={product.qty <= 0 || !product.isActive}
-          onClick={(e) => {
-            e.stopPropagation();
-            open({
-              type: "Sale",
-              productId: product.id,
-              productName: product.name,
-              currentQty: product.qty,
-            });
-          }}
-          className="bg-blue-400 rounded-md cursor-pointer"
-        >
-          Sale
-        </Button>
-        <Button
-          disabled={!product.isActive}
-          onClick={(e) => {
-            e.stopPropagation();
-            open({
-              type: "Restock",
-              productId: product.id,
-              productName: product.name,
-              currentQty: product.qty,
-            });
-          }}
-          className="bg-orange-400 rounded-md cursor-pointer"
-        >
-          Restock
-        </Button>
-      </TableCell>
-    </TableRow>
-  );
 
   return (
-    <div className="flex flex-col gap-4 @container">
-      {/* Desktop table */}
-      <div className="hidden @md:block">
-        {/* Toolbar */}
-        <div className="flex justify-end mb-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowAll((prev) => !prev)}
-            className="cursor-pointer text-sm gap-2"
-          >
-            {showAll ? (
-              "Show Active Only"
-            ) : (
-              <span className="flex items-center gap-1.5">
-                Show All
-                {archivedCount > 0 && (
-                  <span className="bg-muted text-muted-foreground text-xs rounded-full px-1.5 py-0.5 font-mono">
-                    +{archivedCount} archived
-                  </span>
-                )}
-              </span>
-            )}
-          </Button>
-        </div>
+    <Dialog open={store.isOpen} onOpenChange={store.actions.close}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogTitle className="font-bold justify-center m-auto">
+          {store.type} Product
+        </DialogTitle>
 
-        <Table>
-          <TableHeader>
-            <TableRow className="text-lg">
-              <TableHead
-                className="cursor-pointer select-none whitespace-nowrap hover:text-foreground transition-colors"
-                onClick={handleCompanyHeaderClick}
-              >
-                Company
-                <SortIcon
-                  active={companyActive}
-                  direction={desktopSort?.direction}
-                />
-              </TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Cost Price</TableHead>
-              <TableHead>Selling Price</TableHead>
-              <TableHead
-                className="cursor-pointer select-none whitespace-nowrap hover:text-foreground transition-colors"
-                onClick={handleQtyHeaderClick}
-              >
-                Qty
-                <SortIcon
-                  active={qtyActive}
-                  direction={desktopSort?.direction}
-                />
-              </TableHead>
-              <TableHead className="text-center">...</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {!sortedProducts.length ? (
-              <TableRow>
-                <TableCell
-                  colSpan={7}
-                  className="text-muted-foreground py-10 text-center"
-                >
-                  No products found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              sortedProducts.map(renderRow)
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Mobile cards */}
-      <div className="flex flex-col gap-3 @md:hidden">
-        {/* Sort + filter row */}
-        <div className="flex items-center gap-2">
-          <label
-            htmlFor="mobile-sort"
-            className="text-sm text-muted-foreground whitespace-nowrap"
-          >
-            Sort by:
-          </label>
-          <select
-            id="mobile-sort"
-            value={mobileSortKey}
-            onChange={(e) => setMobileSortKey(e.target.value)}
-            className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-          >
-            <option value="default">Default (Company A–Z)</option>
-            <option value="company-desc">Company Z–A</option>
-            <option value="qty-asc">Qty: Lowest first</option>
-            <option value="qty-desc">Qty: Highest first</option>
-          </select>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowAll((prev) => !prev)}
-            className="cursor-pointer text-sm whitespace-nowrap"
-          >
-            {showAll ? (
-              "Active only"
-            ) : (
-              <span className="flex items-center gap-1">
-                All
-                {archivedCount > 0 && (
-                  <span className="bg-muted text-muted-foreground text-xs rounded-full px-1.5 font-mono">
-                    +{archivedCount}
-                  </span>
-                )}
-              </span>
-            )}
-          </Button>
-        </div>
-
-        {!mobileSortedProducts.length ? (
-          <div className="text-muted-foreground py-10 text-center">
-            No products found.
+        <div className="flex flex-col gap-4">
+          {/* Company */}
+          <div className="flex flex-col gap-1">
+            <Label>Company</Label>
+            <Input
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              placeholder="Company name"
+            />
           </div>
-        ) : (
-          mobileSortedProducts.map((product) => (
-            <div
-              key={product.id}
-              onClick={() =>
-                openEdit({
-                  productId: product.id,
-                  company: product.company,
-                  category: product.category,
-                  name: product.name,
-                  costPrice: product.costPrice,
-                  sellingPrice: product.sellingPrice,
-                  qty: product.qty,
-                  isActive: product.isActive,
-                  dufferinComment: product.dufferinComment,
-                  contactComment: product.contactComment,
-                })
-              }
-              className={`rounded-xl border p-4 cursor-pointer ${
-                !product.isActive
-                  ? "border-border bg-card opacity-50"
-                  : product.qty <= 0
-                    ? "border-pink-200 bg-pink-50"
-                    : product.qty <= 3
-                      ? "border-yellow-200 bg-yellow-50"
-                      : "border-border bg-card"
-              }`}
+
+          {/* Name */}
+          <div className="flex flex-col gap-1">
+            <Label>Product Name</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Product name"
+            />
+          </div>
+
+          {/* Category */}
+          <div className="flex flex-col gap-1">
+            <Label>Category</Label>
+            <Select
+              value={category}
+              onValueChange={(val) => {
+                setCategory(val);
+              }}
             >
-              <div className="flex items-start justify-between">
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold">{product.company}</p>
-                    {!product.isActive && (
-                      <span className="text-xs text-muted-foreground border rounded px-1 py-0.5">
-                        archived
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {product.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {product.category}
-                  </p>
-                  <div className="flex gap-3 mt-1 text-sm">
-                    <span>
-                      Cost:{" "}
-                      <span className="font-mono">
-                        ${product.costPrice.toFixed(2)}
-                      </span>
-                    </span>
-                    <span>
-                      Price:{" "}
-                      <span className="font-mono">
-                        ${product.sellingPrice.toFixed(2)}
-                      </span>
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <span
-                    className={`text-xl font-bold ${
-                      product.qty <= 0
-                        ? "text-red-500"
-                        : product.qty <= 3
-                          ? "text-yellow-600"
-                          : ""
-                    }`}
-                  >
-                    {product.qty}
-                  </span>
-                  <div
-                    className="flex gap-1"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Button
-                      disabled={product.qty <= 0 || !product.isActive}
-                      size="sm"
-                      onClick={() =>
-                        open({
-                          type: "Sale",
-                          productId: product.id,
-                          productName: product.name,
-                          currentQty: product.qty,
-                        })
-                      }
-                      className="bg-blue-400 rounded-md cursor-pointer text-xs"
-                    >
-                      Sale
-                    </Button>
-                    <Button
-                      disabled={!product.isActive}
-                      size="sm"
-                      onClick={() =>
-                        open({
-                          type: "Restock",
-                          productId: product.id,
-                          productName: product.name,
-                          currentQty: product.qty,
-                        })
-                      }
-                      className="bg-orange-400 rounded-md cursor-pointer text-xs"
-                    >
-                      Restock
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Cost Price & Selling Price */}
+          <div className="flex gap-4">
+            <div className="flex flex-1 flex-col gap-1">
+              <Label>Cost Price</Label>
+              <Input
+                value={costPrice}
+                onChange={(e) => setCostPrice(e.target.value)}
+                placeholder="0.00"
+              />
             </div>
-          ))
-        )}
-      </div>
-    </div>
+            <div className="flex flex-1 flex-col gap-1">
+              <Label>Selling Price</Label>
+              <Input
+                value={sellingPrice}
+                onChange={(e) => setSellingPrice(e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          {/* Qty */}
+          <div className="flex flex-col gap-1">
+            <Label>Quantity</Label>
+            <Input
+              value={qty}
+              onChange={(e) => setQty(e.target.value)}
+              placeholder="0"
+            />
+          </div>
+
+          {/* Dufferin Comment */}
+          <div className="flex flex-col gap-1">
+            <Label>Comment from Dufferin</Label>
+            <textarea
+              value={dufferinComment}
+              onChange={(e) => setDufferinComment(e.target.value)}
+              className="bg-secondary min-h-15 rounded-lg p-2 text-sm focus:outline-none"
+              placeholder="leave a message..."
+            />
+          </div>
+
+          {/* Contact Comment */}
+          <div className="flex flex-col gap-1">
+            <Label>Comment from Contact</Label>
+            <textarea
+              value={contactComment}
+              onChange={(e) => setContactComment(e.target.value)}
+              className="bg-secondary min-h-15 rounded-lg p-2 text-sm focus:outline-none"
+              placeholder="leave a message..."
+            />
+          </div>
+
+          {/* Active toggle — Edit mode only */}
+          {store.type === "Edit" && (
+            <div className="flex items-center justify-between rounded-lg border px-4 py-3">
+              <div className="flex flex-col gap-0.5">
+                <Label className="text-sm font-medium">
+                  {isActive ? "Active" : "Archived"}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {isActive
+                    ? "Visible and available for sale"
+                    : "Hidden from the product list"}
+                </p>
+              </div>
+              <Switch
+                checked={isActive}
+                onCheckedChange={setIsActive}
+                className="cursor-pointer"
+              />
+            </div>
+          )}
+
+          <Button
+            onClick={handleSave}
+            disabled={isPending}
+            className="cursor-pointer"
+          >
+            {isPending ? "Saving..." : "Save"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

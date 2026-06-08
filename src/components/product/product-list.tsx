@@ -59,15 +59,12 @@ export default function ProductList() {
   const { openEdit } = useProductModalActions();
   const { open } = useTransactionEditorModalActions();
 
-  // Desktop: null = default (company asc)
   const [desktopSort, setDesktopSort] = useState<DesktopSort>(null);
-
-  // Mobile: full sort select
   const [mobileSortKey, setMobileSortKey] = useState<string>("default");
+  const [showAll, setShowAll] = useState(false);
 
   const handleCompanyHeaderClick = () => {
     setDesktopSort((prev) => {
-      // default (null) is already company asc → first click goes Z–A (desc)
       if (!prev || prev.field !== "company")
         return { field: "company", direction: "desc" };
       return {
@@ -88,9 +85,14 @@ export default function ProductList() {
     });
   };
 
-  const sortedProducts = useMemo(() => {
+  // Shared filter: apply isActive filter first, then sort
+  const filteredProducts = useMemo(() => {
     if (!products) return [];
-    return [...products].sort((a, b) => {
+    return showAll ? products : products.filter((p) => p.isActive);
+  }, [products, showAll]);
+
+  const sortedProducts = useMemo(() => {
+    return [...filteredProducts].sort((a, b) => {
       if (desktopSort?.field === "qty") {
         return desktopSort.direction === "asc" ? a.qty - b.qty : b.qty - a.qty;
       }
@@ -98,28 +100,32 @@ export default function ProductList() {
         const cmp = a.company.localeCompare(b.company);
         return desktopSort.direction === "asc" ? cmp : -cmp;
       }
-      // default: company asc
       return a.company.localeCompare(b.company);
     });
-  }, [products, desktopSort]);
+  }, [filteredProducts, desktopSort]);
 
   const mobileSortedProducts = useMemo(() => {
-    if (!products) return [];
     const option = SORT_OPTIONS.find(
       (o) => `${o.field}-${o.direction}` === mobileSortKey,
     );
-    if (!option) return [...products];
-    return [...products].sort((a, b) => {
+    if (!option) return [...filteredProducts];
+    return [...filteredProducts].sort((a, b) => {
       if (option.field === "qty") {
         return option.direction === "asc" ? a.qty - b.qty : b.qty - a.qty;
       }
       const cmp = a.company.localeCompare(b.company);
       return option.direction === "asc" ? cmp : -cmp;
     });
-  }, [products, mobileSortKey]);
+  }, [filteredProducts, mobileSortKey]);
 
   const companyActive = desktopSort?.field === "company";
   const qtyActive = desktopSort?.field === "qty";
+
+  // Count archived for badge
+  const archivedCount = useMemo(
+    () => products?.filter((p) => !p.isActive).length ?? 0,
+    [products],
+  );
 
   if (isFetchProductsPending) return <div>Loading...</div>;
   if (isFetchProductsError) return <div>Something went wrong.</div>;
@@ -128,11 +134,13 @@ export default function ProductList() {
     <TableRow
       key={product.id}
       className={`cursor-pointer text-lg ${
-        product.qty <= 0
-          ? "bg-pink-50 hover:bg-pink-100"
-          : product.qty <= 3
-            ? "bg-yellow-50 hover:bg-yellow-100"
-            : "hover:bg-muted/50"
+        !product.isActive
+          ? "opacity-50"
+          : product.qty <= 0
+            ? "bg-pink-50 hover:bg-pink-100"
+            : product.qty <= 3
+              ? "bg-yellow-50 hover:bg-yellow-100"
+              : "hover:bg-muted/50"
       }`}
       onClick={() =>
         openEdit({
@@ -151,9 +159,16 @@ export default function ProductList() {
     >
       <TableCell>{product.company}</TableCell>
       <TableCell className="font-medium">
-        {product.name.length > 45
-          ? `${product.name.slice(0, 45)}...`
-          : product.name}
+        <span>
+          {product.name.length > 45
+            ? `${product.name.slice(0, 45)}...`
+            : product.name}
+        </span>
+        {!product.isActive && (
+          <span className="ml-2 text-xs text-muted-foreground border rounded px-1 py-0.5">
+            archived
+          </span>
+        )}
       </TableCell>
       <TableCell>{product.category}</TableCell>
       <TableCell>${product.costPrice?.toFixed(2)}</TableCell>
@@ -161,7 +176,7 @@ export default function ProductList() {
       <TableCell>{product.qty}</TableCell>
       <TableCell className="flex justify-center items-center gap-2">
         <Button
-          disabled={product.qty <= 0}
+          disabled={product.qty <= 0 || !product.isActive}
           onClick={(e) => {
             e.stopPropagation();
             open({
@@ -176,6 +191,7 @@ export default function ProductList() {
           Sale
         </Button>
         <Button
+          disabled={!product.isActive}
           onClick={(e) => {
             e.stopPropagation();
             open({
@@ -197,6 +213,29 @@ export default function ProductList() {
     <div className="flex flex-col gap-4 @container">
       {/* Desktop table */}
       <div className="hidden @md:block">
+        {/* Toolbar */}
+        <div className="flex justify-end mb-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAll((prev) => !prev)}
+            className="cursor-pointer text-sm gap-2"
+          >
+            {showAll ? (
+              "Show Active Only"
+            ) : (
+              <span className="flex items-center gap-1.5">
+                Show All
+                {archivedCount > 0 && (
+                  <span className="bg-muted text-muted-foreground text-xs rounded-full px-1.5 py-0.5 font-mono">
+                    +{archivedCount} archived
+                  </span>
+                )}
+              </span>
+            )}
+          </Button>
+        </div>
+
         <Table>
           <TableHeader>
             <TableRow className="text-lg">
@@ -246,7 +285,7 @@ export default function ProductList() {
 
       {/* Mobile cards */}
       <div className="flex flex-col gap-3 @md:hidden">
-        {/* Sort select */}
+        {/* Sort + filter row */}
         <div className="flex items-center gap-2">
           <label
             htmlFor="mobile-sort"
@@ -265,6 +304,25 @@ export default function ProductList() {
             <option value="qty-asc">Qty: Lowest first</option>
             <option value="qty-desc">Qty: Highest first</option>
           </select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAll((prev) => !prev)}
+            className="cursor-pointer text-sm whitespace-nowrap"
+          >
+            {showAll ? (
+              "Active only"
+            ) : (
+              <span className="flex items-center gap-1">
+                All
+                {archivedCount > 0 && (
+                  <span className="bg-muted text-muted-foreground text-xs rounded-full px-1.5 font-mono">
+                    +{archivedCount}
+                  </span>
+                )}
+              </span>
+            )}
+          </Button>
         </div>
 
         {!mobileSortedProducts.length ? (
@@ -290,16 +348,25 @@ export default function ProductList() {
                 })
               }
               className={`rounded-xl border p-4 cursor-pointer ${
-                product.qty <= 0
-                  ? "border-pink-200 bg-pink-50"
-                  : product.qty <= 3
-                    ? "border-yellow-200 bg-yellow-50"
-                    : "border-border bg-card"
+                !product.isActive
+                  ? "border-border bg-card opacity-50"
+                  : product.qty <= 0
+                    ? "border-pink-200 bg-pink-50"
+                    : product.qty <= 3
+                      ? "border-yellow-200 bg-yellow-50"
+                      : "border-border bg-card"
               }`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex flex-col gap-1">
-                  <p className="font-semibold">{product.company}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold">{product.company}</p>
+                    {!product.isActive && (
+                      <span className="text-xs text-muted-foreground border rounded px-1 py-0.5">
+                        archived
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     {product.name}
                   </p>
@@ -338,7 +405,7 @@ export default function ProductList() {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Button
-                      disabled={product.qty <= 0}
+                      disabled={product.qty <= 0 || !product.isActive}
                       size="sm"
                       onClick={() =>
                         open({
@@ -353,6 +420,7 @@ export default function ProductList() {
                       Sale
                     </Button>
                     <Button
+                      disabled={!product.isActive}
                       size="sm"
                       onClick={() =>
                         open({
