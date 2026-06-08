@@ -28,6 +28,7 @@ model Product {
   qty             Int           @default(0)
   dufferinComment String        @default("")
   contactComment  String        @default("")
+  isActive        Boolean       @default(true)
   transactions    Transaction[]
 }
 

@@ -97,6 +97,7 @@ export async function PATCH(req: NextRequest) {
     qty,
     dufferinComment,
     contactComment,
+    isActive,
   }: Product = (await req.json()) as Product;
 
   if (!id) {
@@ -114,6 +115,7 @@ export async function PATCH(req: NextRequest) {
       qty,
       dufferinComment,
       contactComment,
+      isActive,
     },
   });
 

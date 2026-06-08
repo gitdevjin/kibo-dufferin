@@ -10,6 +10,7 @@ export async function updateProduct({
   dufferinComment,
   contactComment,
   qty,
+  isActive,
 }: Product) {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("Token Missing");
@@ -31,6 +32,7 @@ export async function updateProduct({
       dufferinComment,
       contactComment,
       qty,
+      isActive,
     }),
   });
 

@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Sidebar,
   SidebarContent,
@@ -7,16 +9,14 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   ArrowLeftRight,
   ChartNoAxesCombined,
   Home,
   ScanBarcode,
-  SquareActivity,
-  Telescope,
 } from "lucide-react";
-import { useSession } from "@/hooks/queries/use-session";
 import Link from "next/link";
 
 const getItems = () => [
@@ -41,8 +41,10 @@ const getItems = () => [
     icon: ChartNoAxesCombined,
   },
 ];
+
 export default function SideMenu() {
   const items = getItems();
+  const { setOpenMobile } = useSidebar();
 
   return (
     <Sidebar>
@@ -54,15 +56,19 @@ export default function SideMenu() {
               &nbsp;&nbsp;KIBO&nbsp;Dufferin
             </span>
           </SidebarGroupLabel>
-          <SidebarGroupContent className="">
+          <SidebarGroupContent>
             <SidebarMenu className="gap-4 p-2 pr-0">
               {items.map((item) => (
-                <SidebarMenuItem key={item.title} className="">
+                <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
                     className="min-h-11 [&>svg]:h-6 [&>svg]:w-6 cursor-pointer"
                   >
-                    <Link href={item.url} className="flex items-center gap-4">
+                    <Link
+                      href={item.url}
+                      className="flex items-center gap-4"
+                      onClick={() => setOpenMobile(false)}
+                    >
                       <item.icon className="h-9 w-9" />
                       <span className="text-xl font-normal tracking-wider">
                         {item.title}

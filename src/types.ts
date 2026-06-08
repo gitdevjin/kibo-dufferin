@@ -19,6 +19,7 @@ export type Product = {
   sellingPrice: number;
   dufferinComment: string;
   contactComment: string;
+  isActive: boolean;
   qty: number;
 };
 

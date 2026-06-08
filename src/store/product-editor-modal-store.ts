@@ -12,6 +12,7 @@ type EditMode = {
   costPrice: number;
   sellingPrice: number;
   qty: number;
+  isActive: boolean;
   dufferinComment: string;
   contactComment: string;
 };
