@@ -8,8 +8,10 @@ import Loading from "../fallback/loading";
 import { Button } from "../ui/button";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useAlertModal } from "@/store/alert-modal-store";
 
 export default function TransactionFeed({ dateBefore }: { dateBefore?: Date }) {
+  const { actions } = useAlertModal();
   const { data, error, isPending, fetchNextPage, isFetchingNextPage } =
     useInfiniteTransactionsQuery({ dateBefore });
 
@@ -79,7 +81,14 @@ export default function TransactionFeed({ dateBefore }: { dateBefore?: Date }) {
                     size="sm"
                     variant="ghost"
                     className="cursor-pointer text-destructive hover:text-destructive"
-                    onClick={() => deleteTransaction(transaction.id)}
+                    onClick={() =>
+                      actions.open({
+                        title: "Delete Transaction",
+                        description:
+                          "Are you sure you want to delete this transaction? This action cannot be undone.",
+                        onPositive: () => deleteTransaction(transaction.id),
+                      })
+                    }
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -117,7 +126,14 @@ export default function TransactionFeed({ dateBefore }: { dateBefore?: Date }) {
                   size="sm"
                   variant="ghost"
                   className="cursor-pointer text-destructive hover:text-destructive h-7 w-7 p-0"
-                  onClick={() => deleteTransaction(transaction.id)}
+                  onClick={() =>
+                    actions.open({
+                      title: "Delete Transaction",
+                      description:
+                        "Are you sure you want to delete this transaction? This action cannot be undone.",
+                      onPositive: () => deleteTransaction(transaction.id),
+                    })
+                  }
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
