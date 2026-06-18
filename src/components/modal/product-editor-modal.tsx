@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "../ui/select";
 
-const CATEGORIES = ["Mask", "Others"] as const;
+const CATEGORIES = ["Mask", "Serum", "Toner", "Cleanser", "Others"] as const;
 
 export default function ProductEditorModal() {
   const store = useProductEditorModalStore();

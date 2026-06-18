@@ -31,6 +31,10 @@ const SORT_OPTIONS: SortOption[] = [
   { label: "Qty: Highest first", field: "qty", direction: "desc" },
 ];
 
+const CATEGORIES = ["Mask", "Serum", "Toner", "Cleanser", "Others"] as const;
+type Category = (typeof CATEGORIES)[number];
+type CategoryFilter = Category | "All";
+
 type DesktopSort = {
   field: "company" | "qty";
   direction: "asc" | "desc";
@@ -62,6 +66,7 @@ export default function ProductList() {
   const [desktopSort, setDesktopSort] = useState<DesktopSort>(null);
   const [mobileSortKey, setMobileSortKey] = useState<string>("default");
   const [showAll, setShowAll] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("All");
 
   const handleCompanyHeaderClick = () => {
     setDesktopSort((prev) => {
@@ -85,11 +90,15 @@ export default function ProductList() {
     });
   };
 
-  // Shared filter: apply isActive filter first, then sort
+  // Shared filter: apply isActive filter, then category filter, then sort
   const filteredProducts = useMemo(() => {
     if (!products) return [];
-    return showAll ? products : products.filter((p) => p.isActive);
-  }, [products, showAll]);
+    let result = showAll ? products : products.filter((p) => p.isActive);
+    if (categoryFilter !== "All") {
+      result = result.filter((p) => p.category === categoryFilter);
+    }
+    return result;
+  }, [products, showAll, categoryFilter]);
 
   const sortedProducts = useMemo(() => {
     return [...filteredProducts].sort((a, b) => {
@@ -121,11 +130,15 @@ export default function ProductList() {
   const companyActive = desktopSort?.field === "company";
   const qtyActive = desktopSort?.field === "qty";
 
-  // Count archived for badge
-  const archivedCount = useMemo(
-    () => products?.filter((p) => !p.isActive).length ?? 0,
-    [products],
-  );
+  // Count archived for badge (respects category filter, not active filter)
+  const archivedCount = useMemo(() => {
+    if (!products) return 0;
+    const base =
+      categoryFilter === "All"
+        ? products
+        : products.filter((p) => p.category === categoryFilter);
+    return base.filter((p) => !p.isActive).length;
+  }, [products, categoryFilter]);
 
   if (isFetchProductsPending) return <div>Loading...</div>;
   if (isFetchProductsError) return <div>Something went wrong.</div>;
@@ -214,12 +227,35 @@ export default function ProductList() {
       {/* Desktop table */}
       <div className="hidden @md:block">
         {/* Toolbar */}
-        <div className="flex justify-end mb-2">
+        <div className="flex items-center justify-between mb-2 gap-2">
+          {/* Category filter pills */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Button
+              variant={categoryFilter === "All" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setCategoryFilter("All")}
+              className="cursor-pointer text-sm"
+            >
+              All
+            </Button>
+            {CATEGORIES.map((cat) => (
+              <Button
+                key={cat}
+                variant={categoryFilter === cat ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCategoryFilter(cat)}
+                className="cursor-pointer text-sm"
+              >
+                {cat}
+              </Button>
+            ))}
+          </div>
+
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowAll((prev) => !prev)}
-            className="cursor-pointer text-sm gap-2"
+            className="cursor-pointer text-sm gap-2 whitespace-nowrap"
           >
             {showAll ? (
               "Show Active Only"
@@ -285,6 +321,31 @@ export default function ProductList() {
 
       {/* Mobile cards */}
       <div className="flex flex-col gap-3 @md:hidden">
+        {/* Category filter row */}
+        <div className="flex items-center gap-2">
+          <label
+            htmlFor="mobile-category"
+            className="text-sm text-muted-foreground whitespace-nowrap"
+          >
+            Category:
+          </label>
+          <select
+            id="mobile-category"
+            value={categoryFilter}
+            onChange={(e) =>
+              setCategoryFilter(e.target.value as CategoryFilter)
+            }
+            className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="All">All categories</option>
+            {CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Sort + filter row */}
         <div className="flex items-center gap-2">
           <label
