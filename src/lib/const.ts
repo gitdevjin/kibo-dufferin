@@ -11,4 +11,11 @@ export const QUERY_KEYS = {
     all: ["transactions"],
     byDate: (dateBefore: string) => ["transactions", dateBefore],
   },
+  statistics: {
+    byProductsAndDates: (startDate: string, endDate: string) => [
+      "stats",
+      startDate,
+      endDate,
+    ],
+  },
 };

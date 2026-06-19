@@ -37,7 +37,7 @@ const getItems = () => [
   },
   {
     title: "Statistics",
-    url: "#",
+    url: "/statistics",
     icon: ChartNoAxesCombined,
   },
 ];
