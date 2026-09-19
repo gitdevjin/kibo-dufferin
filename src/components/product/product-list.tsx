@@ -11,9 +11,10 @@ import {
   TableRow,
 } from "../ui/table";
 import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 import { useProductModalActions } from "@/store/product-editor-modal-store";
 import { useTransactionEditorModalActions } from "@/store/transction-editor-modal-store";
-import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, Search, X } from "lucide-react";
 
 type SortField = "qty" | "company";
 type SortDirection = "asc" | "desc";
@@ -53,6 +54,51 @@ function SortIcon({
   return <ArrowDown className="inline w-4 h-4 ml-1" />;
 }
 
+function SearchBox({
+  value,
+  onChange,
+  className = "",
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  return (
+    <div className={`relative ${className}`}>
+      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+      <Input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Search company or product..."
+        className="pl-8 pr-8"
+        aria-label="Search products"
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+          aria-label="Clear search"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Every search word must appear in the company or product name (any order,
+// case-insensitive). e.g. "cosrx snail" matches company "COSRX" + name "Snail Essence".
+function matchesSearch(
+  p: { company: string; name: string },
+  searchTerms: string[],
+) {
+  if (!searchTerms.length) return true;
+  const haystack = `${p.company} ${p.name}`.toLowerCase();
+  return searchTerms.every((term) => haystack.includes(term));
+}
+
 export default function ProductList() {
   const {
     data: products,
@@ -67,6 +113,7 @@ export default function ProductList() {
   const [mobileSortKey, setMobileSortKey] = useState<string>("default");
   const [showAll, setShowAll] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("All");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleCompanyHeaderClick = () => {
     setDesktopSort((prev) => {
@@ -90,15 +137,23 @@ export default function ProductList() {
     });
   };
 
-  // Shared filter: apply isActive filter, then category filter, then sort
+  const searchTerms = useMemo(
+    () => searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean),
+    [searchQuery],
+  );
+
+  // Shared filter: apply isActive filter, then category filter, then search
   const filteredProducts = useMemo(() => {
     if (!products) return [];
     let result = showAll ? products : products.filter((p) => p.isActive);
     if (categoryFilter !== "All") {
       result = result.filter((p) => p.category === categoryFilter);
     }
+    if (searchTerms.length) {
+      result = result.filter((p) => matchesSearch(p, searchTerms));
+    }
     return result;
-  }, [products, showAll, categoryFilter]);
+  }, [products, showAll, categoryFilter, searchTerms]);
 
   const sortedProducts = useMemo(() => {
     return [...filteredProducts].sort((a, b) => {
@@ -130,18 +185,23 @@ export default function ProductList() {
   const companyActive = desktopSort?.field === "company";
   const qtyActive = desktopSort?.field === "qty";
 
-  // Count archived for badge (respects category filter, not active filter)
+  // Count archived for badge (respects category + search, not the active filter)
   const archivedCount = useMemo(() => {
     if (!products) return 0;
-    const base =
-      categoryFilter === "All"
-        ? products
-        : products.filter((p) => p.category === categoryFilter);
-    return base.filter((p) => !p.isActive).length;
-  }, [products, categoryFilter]);
+    return products.filter(
+      (p) =>
+        !p.isActive &&
+        (categoryFilter === "All" || p.category === categoryFilter) &&
+        matchesSearch(p, searchTerms),
+    ).length;
+  }, [products, categoryFilter, searchTerms]);
 
   if (isFetchProductsPending) return <div>Loading...</div>;
   if (isFetchProductsError) return <div>Something went wrong.</div>;
+
+  const emptyMessage = searchQuery.trim()
+    ? `No products match "${searchQuery.trim()}".`
+    : "No products found.";
 
   const renderRow = (product: (typeof sortedProducts)[0]) => (
     <TableRow
@@ -226,6 +286,15 @@ export default function ProductList() {
     <div className="flex flex-col gap-4 @container">
       {/* Desktop table */}
       <div className="hidden @md:block">
+        {/* Search */}
+        <div className="flex w-full justify-center">
+          <SearchBox
+            value={searchQuery}
+            onChange={setSearchQuery}
+            className="mb-3 min-w-[50%]"
+          />
+        </div>
+
         {/* Toolbar */}
         <div className="flex items-center justify-between mb-2 gap-2">
           {/* Category filter pills */}
@@ -309,7 +378,7 @@ export default function ProductList() {
                   colSpan={7}
                   className="text-muted-foreground py-10 text-center"
                 >
-                  No products found.
+                  {emptyMessage}
                 </TableCell>
               </TableRow>
             ) : (
@@ -321,6 +390,9 @@ export default function ProductList() {
 
       {/* Mobile cards */}
       <div className="flex flex-col gap-3 @md:hidden">
+        {/* Search */}
+        <SearchBox value={searchQuery} onChange={setSearchQuery} />
+
         {/* Category filter row */}
         <div className="flex items-center gap-2">
           <label
@@ -388,7 +460,7 @@ export default function ProductList() {
 
         {!mobileSortedProducts.length ? (
           <div className="text-muted-foreground py-10 text-center">
-            No products found.
+            {emptyMessage}
           </div>
         ) : (
           mobileSortedProducts.map((product) => (

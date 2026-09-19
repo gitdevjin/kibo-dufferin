@@ -9,7 +9,7 @@ export default function CreateProductButton() {
   return (
     <div
       onClick={openCreateProductModal.openCreate}
-      className="bg-muted text-muted-foreground m-4 cursor-pointer rounded-xl px-8 py-3"
+      className="bg-muted-foreground text-white m-4 cursor-pointer rounded-xl px-8 py-3"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
