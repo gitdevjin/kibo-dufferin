@@ -32,7 +32,15 @@ const SORT_OPTIONS: SortOption[] = [
   { label: "Qty: Highest first", field: "qty", direction: "desc" },
 ];
 
-const CATEGORIES = ["Mask", "Serum", "Toner", "Cleanser", "Others"] as const;
+const CATEGORIES = [
+  "Mask",
+  "Serum",
+  "Toner",
+  "Lotion",
+  "Cream",
+  "Cleanser",
+  "Others",
+] as const;
 type Category = (typeof CATEGORIES)[number];
 type CategoryFilter = Category | "All";
 
